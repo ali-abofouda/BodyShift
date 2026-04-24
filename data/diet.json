@@ -1,0 +1,48 @@
+{
+  "warning": "حافظ على البروتين يوميا عشان جسمك ينزل دهون مش عضل.",
+  "dailyCalories": 2100,
+  "dietAdherence": 82,
+  "macros": {
+    "protein": 160,
+    "carbs": 210,
+    "fat": 70
+  },
+  "macroCards": [
+    { "label": "بروتين", "grams": 160, "percentage": "30% من السعرات", "tone": "good" },
+    { "label": "كارب", "grams": 210, "percentage": "40% من السعرات", "tone": "warn" },
+    { "label": "دهون", "grams": 70, "percentage": "30% من السعرات", "tone": "bad" }
+  ],
+  "caloriesNote": "العجز اليومي محسوب بحيث تنزل بشكل ثابت ومن غير حرمان.",
+  "meals": [
+    {
+      "icon": "🌅",
+      "name": "فطار",
+      "time": "7 - 9 الصبح",
+      "food": "جبنة قريش + بيض + رز",
+      "macros": { "protein": "45 جم", "carbs": "55 جم", "calories": "590 kcal" },
+      "alternative": "لو زهقت: بدّل الرز بتوست أسمر"
+    },
+    {
+      "icon": "☀️",
+      "name": "غدا",
+      "time": "1 - 2 الضهر",
+      "food": "صدر فراخ + رز + سلطة",
+      "macros": { "protein": "55 جم", "carbs": "70 جم", "calories": "650 kcal" },
+      "alternative": "ممكن تونة بدل الفراخ"
+    },
+    {
+      "icon": "🌙",
+      "name": "عشا",
+      "time": "8 - 9 بالليل",
+      "food": "فول + بيض + توست أسمر",
+      "macros": { "protein": "30 جم", "carbs": "55 جم", "calories": "540 kcal" },
+      "alternative": "ممكن عدس بدل الفول"
+    }
+  ],
+  "summarySteps": [
+    "ابدأ يومك ببروتين محترم.",
+    "قسّم أكلك على اليوم عشان الجوع مايضربكش.",
+    "خليك ثابت على السعرات أغلب الأسبوع.",
+    "راجع أكلك آخر كل يوم وعدّل لو لزم."
+  ]
+}

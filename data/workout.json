@@ -1,0 +1,54 @@
+{
+  "workoutCompletion": {
+    "completed": 3,
+    "target": 4
+  },
+  "planDays": [
+    {
+      "badge": "يوم 1",
+      "title": "Push",
+      "focus": "صدر - كتف - تراي",
+      "exercises": [
+        { "name": "Bench Press", "sets": "4 × 8-10" },
+        { "name": "Shoulder Press", "sets": "3 × 10" },
+        { "name": "Tricep Pushdown", "sets": "3 × 12" }
+      ]
+    },
+    {
+      "badge": "يوم 2",
+      "title": "Pull",
+      "focus": "ظهر - باي",
+      "exercises": [
+        { "name": "Lat Pulldown", "sets": "4 × 10" },
+        { "name": "Cable Row", "sets": "3 × 10" },
+        { "name": "Hammer Curl", "sets": "3 × 12" }
+      ]
+    },
+    {
+      "badge": "يوم 3",
+      "title": "Legs + Core",
+      "focus": "رجل - بطن",
+      "exercises": [
+        { "name": "Squat", "sets": "4 × 8" },
+        { "name": "Leg Press", "sets": "3 × 12" },
+        { "name": "Plank", "sets": "3 × 45 ثانية" }
+      ]
+    },
+    {
+      "badge": "يوم 4",
+      "title": "Full Body",
+      "focus": "جسم كامل",
+      "exercises": [
+        { "name": "Deadlift", "sets": "4 × 6" },
+        { "name": "Lunges", "sets": "3 × 12" },
+        { "name": "Cable Fly", "sets": "3 × 12" }
+      ]
+    }
+  ],
+  "cardio": {
+    "sessions": 4,
+    "duration": 35,
+    "note": "مشي سريع بعد التمرين أو في يوم الراحة هيساعدك تنزل الدهون الحشوية بسرعة أحسن."
+  },
+  "proTip": "كل ما التمرين يبقى أسهل، زوّد الوزن تدريجي وسجّل الأرقام."
+}

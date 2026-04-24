@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>خطة التحول | InBody Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #00C07F;
+  --green-dark: #009962;
+  --green-glow: rgba(0,192,127,0.18);
+  --red: #FF4757;
+  --amber: #FFA502;
+  --bg: #0a0f0d;
+  --bg2: #111916;
+  --bg3: #162019;
+  --surface: #1a2820;
+  --surface2: #1f3028;
+  --border: rgba(0,192,127,0.12);
+  --text: #e8f5f0;
+  --muted: #7aa898;
+  --font: 'Tajawal', 'Cairo', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ─── HERO ─── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  position: relative;
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,192,127,0.13) 0%, transparent 70%), var(--bg);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,192,127,0.08);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  animation: pulse-ring 4s ease-in-out infinite;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  width: 900px; height: 900px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,192,127,0.04);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  animation: pulse-ring 4s ease-in-out infinite 1s;
+}
+@keyframes pulse-ring {
+  0%, 100% { opacity: 0.4; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%,-50%) scale(1.04); }
+}
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,192,127,0.1);
+  border: 1px solid rgba(0,192,127,0.3);
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 13px; color: var(--green);
+  margin-bottom: 2rem;
+  animation: fadeUp 0.6s ease both;
+}
+.hero-badge span { width: 8px; height: 8px; background: var(--green); border-radius: 50%; animation: blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.hero h1 {
+  font-size: clamp(2.4rem, 7vw, 5rem);
+  font-weight: 900;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+.hero h1 em {
+  font-style: normal;
+  color: var(--green);
+  position: relative;
+}
+.hero-sub {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--muted);
+  max-width: 560px;
+  margin-bottom: 2.5rem;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+.hero-stats {
+  display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+.hero-stat { text-align: center; }
+.hero-stat .val { font-size: 2.2rem; font-weight: 800; color: var(--green); line-height: 1; }
+.hero-stat .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.hero-stat.bad .val { color: var(--red); }
+.hero-stat.warn .val { color: var(--amber); }
+.divider-v { width: 1px; background: var(--border); align-self: stretch; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SECTIONS ─── */
+section { padding: 5rem 1.5rem; max-width: 900px; margin: 0 auto; }
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--green);
+  margin-bottom: 0.75rem;
+}
+.section-label::before { content: ''; width: 24px; height: 2px; background: var(--green); }
+h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.2; margin-bottom: 2rem; }
+h2 span { color: var(--green); }
+
+/* ─── INBODY RESULTS ─── */
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.result-card:hover { transform: translateY(-3px); border-color: rgba(0,192,127,0.3); }
+.result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--green); }
+.result-card.bad::before { background: var(--red); }
+.result-card.warn::before { background: var(--amber); }
+.result-card .rc-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.result-card .rc-val { font-size: 1.7rem; font-weight: 800; color: var(--green); line-height: 1; }
+.result-card.bad .rc-val { color: var(--red); }
+.result-card.warn .rc-val { color: var(--amber); }
+.result-card .rc-status { font-size: 11px; margin-top: 4px; }
+.result-card.bad .rc-status { color: #ff8a94; }
+.result-card.warn .rc-status { color: #ffc166; }
+.result-card .rc-status { color: #6ee7b7; }
+
+/* ─── MACROS ─── */
+.macros-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.macro-item { text-align: center; }
+.macro-circle {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  margin: 0 auto 0.75rem;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  border: 3px solid var(--green);
+  background: var(--green-glow);
+  position: relative;
+}
+.macro-circle.carb { border-color: var(--amber); background: rgba(255,165,2,0.1); }
+.macro-circle.fat { border-color: var(--red); background: rgba(255,71,87,0.1); }
+.macro-circle .num { font-size: 1.4rem; font-weight: 800; color: var(--green); line-height: 1; }
+.macro-circle.carb .num { color: var(--amber); }
+.macro-circle.fat .num { color: var(--red); }
+.macro-circle .unit { font-size: 10px; color: var(--muted); }
+.macro-label { font-size: 13px; font-weight: 600; }
+.macro-pct { font-size: 12px; color: var(--muted); }
+
+.calories-banner {
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+  border: 1px solid rgba(0,192,127,0.25);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+}
+.calories-banner .big { font-size: 3rem; font-weight: 900; color: var(--green); line-height: 1; }
+.calories-banner .desc { font-size: 13px; color: var(--muted); max-width: 260px; }
+.calories-banner .desc strong { color: var(--text); font-weight: 600; }
+
+/* ─── MEALS ─── */
+.meal-timeline { position: relative; }
+.meal-timeline::before {
+  content: ''; position: absolute; right: 22px; top: 0; bottom: 0; width: 2px;
+  background: linear-gradient(to bottom, var(--green), transparent);
+}
+.meal-item {
+  display: flex; gap: 1.25rem; margin-bottom: 1.5rem;
+  animation: fadeUp 0.5s ease both;
+}
+.meal-dot {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--surface2);
+  border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+  position: relative; z-index: 1;
+}
+.meal-content {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  flex: 1;
+  transition: border-color 0.2s;
+}
+.meal-content:hover { border-color: rgba(0,192,127,0.3); }
+.meal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+.meal-name { font-size: 15px; font-weight: 700; }
+.meal-time { font-size: 12px; color: var(--green); background: var(--green-glow); padding: 3px 10px; border-radius: 100px; }
+.meal-food { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+.meal-macros { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: 100px;
+}
+.pill-p { background: rgba(0,192,127,0.15); color: var(--green); }
+.pill-c { background: rgba(255,165,2,0.15); color: var(--amber); }
+.pill-k { background: rgba(255,71,87,0.12); color: var(--red); }
+.meal-alt { font-size: 11px; color: var(--muted); margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+.meal-alt strong { color: var(--text); }
+
+/* ─── GYM ─── */
+.days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.day-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.day-card:hover { transform: translateY(-3px); border-color: rgba(0,192,127,0.3); }
+.day-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 100px;
+  background: var(--green-glow); color: var(--green);
+  margin-bottom: 10px;
+}
+.day-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.day-focus { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+.exercise { font-size: 12px; color: var(--muted); padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); line-height: 1.5; }
+.exercise:last-child { border-bottom: none; }
+.exercise strong { color: var(--text); }
+
+/* ─── CARDIO ─── */
+.cardio-box {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+}
+@media(max-width:500px){ .cardio-box { grid-template-columns: 1fr; } }
+.cardio-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  text-align: center;
+}
+.cardio-stat .cv { font-size: 2.5rem; font-weight: 900; color: var(--green); line-height: 1; }
+.cardio-stat .cl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.cardio-note {
+  grid-column: 1/-1;
+  background: var(--surface);
+  border: 1px solid rgba(0,192,127,0.2);
+  border-radius: 16px;
+  padding: 1.25rem;
+  font-size: 13px; color: var(--muted); line-height: 1.8;
+}
+.cardio-note strong { color: var(--green); }
+
+/* ─── TIPS ─── */
+.tips-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.tip-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex; align-items: flex-start; gap: 12px;
+  transition: border-color 0.2s;
+}
+.tip-card:hover { border-color: rgba(0,192,127,0.3); }
+.tip-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 2px; }
+.tip-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+.tip-text strong { color: var(--text); display: block; font-weight: 600; margin-bottom: 2px; }
+
+/* ─── SUMMARY ─── */
+.summary-steps { counter-reset: steps; }
+.step-item {
+  display: flex; gap: 1.25rem; margin-bottom: 1.25rem;
+  align-items: flex-start;
+}
+.step-num {
+  counter-increment: steps;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--green); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 800; flex-shrink: 0;
+}
+.step-body { padding-top: 6px; font-size: 14px; line-height: 1.7; }
+.step-body strong { color: var(--green); }
+
+.goal-box {
+  background: linear-gradient(135deg, rgba(0,192,127,0.12), rgba(0,192,127,0.04));
+  border: 1px solid rgba(0,192,127,0.3);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
+  margin-top: 3rem;
+}
+.goal-box .gt { font-size: 1rem; color: var(--muted); margin-bottom: 8px; }
+.goal-box .gv { font-size: 2.5rem; font-weight: 900; color: var(--green); line-height: 1; margin-bottom: 8px; }
+.goal-box .gd { font-size: 13px; color: var(--muted); }
+
+/* ─── NAV ─── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(10,15,13,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-logo { font-size: 15px; font-weight: 800; color: var(--green); }
+.nav-links { display: flex; gap: 1.5rem; }
+.nav-links a { font-size: 12px; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--green); }
+@media(max-width:500px){ .nav-links { display: none; } }
+
+/* ─── DIVIDER ─── */
+.sep { height: 1px; background: var(--border); max-width: 900px; margin: 0 auto; }
+
+/* ─── PROTEIN HIGHLIGHT ─── */
+.protein-warning {
+  background: rgba(255,71,87,0.08);
+  border: 1px solid rgba(255,71,87,0.25);
+  border-radius: 16px;
+  padding: 1.25rem 1.5rem;
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: 2rem;
+}
+.protein-warning .pw-icon { font-size: 1.5rem; flex-shrink: 0; }
+.protein-warning .pw-text { font-size: 13px; color: #ff8a94; line-height: 1.7; }
+.protein-warning .pw-text strong { color: var(--red); font-size: 15px; display: block; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">⚡ InBody Plan</div>
+  <div class="nav-links">
+    <a href="#results">النتائج</a>
+    <a href="#diet">التغذية</a>
+    <a href="#gym">الجيم</a>
+    <a href="#summary">الملخص</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span></span> خطة Fat Loss مخصصة — 21 سنة</div>
+  <h1>وقت التحول<br><em>الحقيقي</em> بيبدأ دلوقتي</h1>
+  <p class="hero-sub">بناءً على تحليل InBody بتاعك — خطة غذائية وتمرين كاملة عشان توصل للوزن المثالي في 6 أشهر</p>
+  <div class="hero-stats">
+    <div class="hero-stat bad">
+      <div class="val">29.2%</div>
+      <div class="lbl">نسبة الدهون</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="hero-stat warn">
+      <div class="val">87.3</div>
+      <div class="lbl">الوزن الحالي كجم</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="hero-stat">
+      <div class="val">72.8</div>
+      <div class="lbl">الوزن المثالي كجم</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="hero-stat">
+      <div class="val">69</div>
+      <div class="lbl">InBody Score</div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="section-label">تحليل النتائج</div>
+  <h2>وين أنت <span>دلوقتي؟</span></h2>
+  <div class="results-grid">
+    <div class="result-card bad">
+      <div class="rc-label">نسبة الدهون</div>
+      <div class="rc-val">29.2%</div>
+      <div class="rc-status bad">مرتفعة جداً ← مثالي 10-20%</div>
+    </div>
+    <div class="result-card bad">
+      <div class="rc-label">دهون حشوية</div>
+      <div class="rc-val">Level 11</div>
+      <div class="rc-status bad">خطر — ابدأ تخسّن فوراً</div>
+    </div>
+    <div class="result-card warn">
+      <div class="rc-label">كتلة الدهون</div>
+      <div class="rc-val">25.5 كجم</div>
+      <div class="rc-status warn">محتاج تخسر 14.5 كجم</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">كتلة عضلية</div>
+      <div class="rc-val">61.8 كجم</div>
+      <div class="rc-status">طبيعية ← محافظ عليها</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">معدل الأيض BMR</div>
+      <div class="rc-val">1706</div>
+      <div class="rc-status">سعر حراري يومياً</div>
+    </div>
+    <div class="result-card warn">
+      <div class="rc-label">InBody Score</div>
+      <div class="rc-val">69/100</div>
+      <div class="rc-status warn">تحت المتوسط — قابل للتحسين</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- DIET -->
+<section id="diet">
+  <div class="section-label">النظام الغذائي</div>
+  <h2>اكلك يبقى <span>سلاحك</span></h2>
+
+  <!-- protein warning -->
+  <div class="protein-warning">
+    <div class="pw-icon">⚠️</div>
+    <div class="pw-text">
+      <strong>تنبيه مهم — البروتين</strong>
+      الخطة دي بتوفر ~160 جم بروتين يومياً. لو قادر تاكل أقل من كده مشكلة — بس الحد الأدنى للحفاظ على عضلك وانت بتخسّن هو 130-140 جم يومياً. ماتقلّلش عن كده. كل صدر دجاج + جبن قريش يومياً وهتوصل للرقم ده بسهولة.
+    </div>
+  </div>
+
+  <!-- macros -->
+  <div class="macros-box">
+    <div class="macro-item">
+      <div class="macro-circle">
+        <div class="num">160</div>
+        <div class="unit">جم</div>
+      </div>
+      <div class="macro-label">بروتين</div>
+      <div class="macro-pct">30% من السعرات</div>
+    </div>
+    <div class="macro-item">
+      <div class="macro-circle carb">
+        <div class="num">210</div>
+        <div class="unit">جم</div>
+      </div>
+      <div class="macro-label">كارب</div>
+      <div class="macro-pct">40% من السعرات</div>
+    </div>
+    <div class="macro-item">
+      <div class="macro-circle fat">
+        <div class="num">70</div>
+        <div class="unit">جم</div>
+      </div>
+      <div class="macro-label">دهون</div>
+      <div class="macro-pct">30% من السعرات</div>
+    </div>
+  </div>
+
+  <div class="calories-banner">
+    <div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px">السعرات الكلية اليومية</div>
+      <div class="big">2100 kcal</div>
+    </div>
+    <div class="desc">
+      <strong>عجز 450 سعر يومياً</strong> عن معدل حرقك الكلي. ده بيعطيك خسارة 0.5-0.7 كجم أسبوعياً بدون ما تحس بجوع شديد أو إرهاق.
+    </div>
+  </div>
+
+  <br>
+  <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:1.5rem;color:var(--muted)">مثال يوم كامل</h3>
+  <div class="meal-timeline">
+
+    <div class="meal-item">
+      <div class="meal-dot">🌅</div>
+      <div class="meal-content">
+        <div class="meal-header">
+          <div class="meal-name">فطار</div>
+          <div class="meal-time">7 – 9 صباحاً</div>
+        </div>
+        <div class="meal-food">جبن قريش 250 جم + 3 بيض مسلوق + رز أبيض 1 كوب مطبوخ</div>
+        <div class="meal-macros">
+          <span class="pill pill-p">بروتين 45 جم</span>
+          <span class="pill pill-c">كارب 55 جم</span>
+          <span class="pill pill-k">~590 kcal</span>
+        </div>
+        <div class="meal-alt"><strong>بديل:</strong> بدل جبن قريش → 4 بيض مسلوق إضافي | بدل رز → توست أسمر 2 شريحة</div>
+      </div>
+    </div>
+
+    <div class="meal-item">
+      <div class="meal-dot">☀️</div>
+      <div class="meal-content">
+        <div class="meal-header">
+          <div class="meal-name">غداء — أهم وجبة</div>
+          <div class="meal-time">1 – 2 ظهراً</div>
+        </div>
+        <div class="meal-food">صدر دجاج مشوي 200 جم + رز 1.5 كوب مطبوخ + سلطة خضراء</div>
+        <div class="meal-macros">
+          <span class="pill pill-p">بروتين 55 جم</span>
+          <span class="pill pill-c">كارب 70 جم</span>
+          <span class="pill pill-k">~650 kcal</span>
+        </div>
+        <div class="meal-alt"><strong>بديل:</strong> بدل دجاج → تونة في ميه علبة كاملة | رز → معكرونة قمح كامل</div>
+      </div>
+    </div>
+
+    <div class="meal-item">
+      <div class="meal-dot">🌤️</div>
+      <div class="meal-content">
+        <div class="meal-header">
+          <div class="meal-name">سناك بعد الظهر</div>
+          <div class="meal-time">5 مساءً</div>
+        </div>
+        <div class="meal-food">جبن قريش 200 جم + موزة أو تفاحة</div>
+        <div class="meal-macros">
+          <span class="pill pill-p">بروتين 30 جم</span>
+          <span class="pill pill-c">كارب 30 جم</span>
+          <span class="pill pill-k">~320 kcal</span>
+        </div>
+        <div class="meal-alt"><strong>بديل:</strong> بدل فاكهة → خيارة + طماطم | بدل جبن قريش → بيض مسلوق 3 حبات</div>
+      </div>
+    </div>
+
+    <div class="meal-item">
+      <div class="meal-dot">🌙</div>
+      <div class="meal-content">
+        <div class="meal-header">
+          <div class="meal-name">عشاء</div>
+          <div class="meal-time">8 – 9 مساءً</div>
+        </div>
+        <div class="meal-food">فول مدمس 1.5 كوب + بيض مسلوق 2 + خبز توست أسمر 2 شريحة</div>
+        <div class="meal-macros">
+          <span class="pill pill-p">بروتين 30 جم</span>
+          <span class="pill pill-c">كارب 55 جم</span>
+          <span class="pill pill-k">~540 kcal</span>
+        </div>
+        <div class="meal-alt"><strong>بديل:</strong> بدل فول → عدس مطبوخ 1.5 كوب | بدل توست → رز بسمتي</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- GYM -->
+<section id="gym">
+  <div class="section-label">التمارين</div>
+  <h2>جدول الجيم <span>4 أيام</span></h2>
+  <div class="days-grid">
+
+    <div class="day-card">
+      <div class="day-badge">يوم 1 — الأحد</div>
+      <div class="day-title">Push</div>
+      <div class="day-focus">صدر · كتف · ترايسبس</div>
+      <div class="exercise"><strong>Bench Press</strong><br>4 مجموعات × 8-10 تكرار</div>
+      <div class="exercise"><strong>Incline Dumbbell Press</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Shoulder Press</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Lateral Raise</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Tricep Pushdown</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Overhead Extension</strong><br>3 × 12</div>
+    </div>
+
+    <div class="day-card">
+      <div class="day-badge">يوم 2 — الثلاثاء</div>
+      <div class="day-title">Pull</div>
+      <div class="day-focus">ظهر · بايسبس</div>
+      <div class="exercise"><strong>Lat Pulldown</strong><br>4 × 10</div>
+      <div class="exercise"><strong>Seated Cable Row</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Dumbbell Row</strong><br>3 × 10 لكل جانب</div>
+      <div class="exercise"><strong>Face Pull</strong><br>3 × 15</div>
+      <div class="exercise"><strong>Barbell Curl</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Hammer Curl</strong><br>3 × 12</div>
+    </div>
+
+    <div class="day-card">
+      <div class="day-badge">يوم 3 — الخميس</div>
+      <div class="day-title">Legs + Core</div>
+      <div class="day-focus">رجلين · بطن</div>
+      <div class="exercise"><strong>Squat</strong><br>4 × 8</div>
+      <div class="exercise"><strong>Leg Press</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Romanian Deadlift</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Leg Curl</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Calf Raise</strong><br>4 × 15</div>
+      <div class="exercise"><strong>Plank + Crunches</strong><br>3 × 45 ثانية / 3 × 20</div>
+    </div>
+
+    <div class="day-card">
+      <div class="day-badge">يوم 4 — السبت</div>
+      <div class="day-title">Full Body</div>
+      <div class="day-focus">جسم كامل · قوة</div>
+      <div class="exercise"><strong>Deadlift</strong><br>4 × 6</div>
+      <div class="exercise"><strong>Pull-up / Assisted</strong><br>3 × 8</div>
+      <div class="exercise"><strong>Dumbbell Lunges</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Arnold Press</strong><br>3 × 10</div>
+      <div class="exercise"><strong>Cable Fly</strong><br>3 × 12</div>
+      <div class="exercise"><strong>Leg Raise</strong><br>3 × 15</div>
+    </div>
+
+  </div>
+
+  <div style="background:var(--surface);border:1px solid rgba(0,192,127,0.2);border-radius:16px;padding:1.25rem;margin-top:16px;font-size:13px;color:var(--muted);line-height:1.8;">
+    📈 <strong style="color:var(--green)">Progressive Overload:</strong> لما تعمل التمرين بنفس الوزن 3 مرات بالراحة — زيد 2.5 كجم. سجّل أوزانك في ورقة أو أبلكيشن Strong. ده السر الوحيد لنمو العضل.
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- CARDIO -->
+<section>
+  <div class="section-label">الكارديو</div>
+  <h2>الكارديو <span>ضروري</span> ليك</h2>
+  <div class="cardio-box">
+    <div class="cardio-stat">
+      <div class="cv">3-4</div>
+      <div class="cl">مرات أسبوعياً</div>
+    </div>
+    <div class="cardio-stat">
+      <div class="cv">30-45</div>
+      <div class="cl">دقيقة كل مرة</div>
+    </div>
+    <div class="cardio-note">
+      الدهون الحشوية Level 11 محتاجة كارديو بانتظام — مش اختياري. الأفضل ليك: <strong>LISS (مشي سريع على التريدميل)</strong> بنبضات 120-140 bpm. اعمله بعد التمرين أو في أيام الراحة. تجنب الكارديو الشديد (HIIT) في الأول لأنه ممكن يحرق العضل.
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- TIPS -->
+<section>
+  <div class="section-label">نصائح مهمة</div>
+  <h2>التفاصيل اللي <span>بتفرق</span></h2>
+  <div class="tips-list">
+    <div class="tip-card">
+      <div class="tip-icon">💧</div>
+      <div class="tip-text"><strong>شرب الميه — 3-4 لتر</strong>بيقلل الجوع الكاذب، بيساعد الكلى وبيسرّع حرق الدهون. شيل معاك زجاجة دايماً.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">😴</div>
+      <div class="tip-text"><strong>نوم 7-8 ساعات</strong>قلة النوم ترفع الكورتيزول وتزود الدهون الحشوية. النوم مش رفاهية — هو جزء من الخطة.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">⏰</div>
+      <div class="tip-text"><strong>كل كل 3-4 ساعات</strong>بيمنع الجوع الشديد اللي بيخليك تاكل أكتر. 4 وجبات بانتظام أفضل من 2 وجبات كبيرة.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">📉</div>
+      <div class="tip-text"><strong>وزّن أسبوعياً مش يومياً</strong>الوزن بيتغير يومياً بسبب الميه والصوديوم. الأسبوعي هو المقياس الصح.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">🚫</div>
+      <div class="tip-text"><strong>قلل المقلي والمعالج</strong>الدهون الحشوية بتتأثر بيهم أكتر من أي حاجة تانية. مش لازم تقطع — بس قلّل بجدية.</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">📝</div>
+      <div class="tip-text"><strong>سجّل أوزانك في الجيم</strong>من غير تسجيل مش هتعرف تتقدم. أبلكيشن Strong أو حتى ورقة بتفرق.</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- SUMMARY -->
+<section id="summary">
+  <div class="section-label">الملخص اليومي</div>
+  <h2>روتينك <span>كل يوم</span></h2>
+
+  <div class="summary-steps">
+    <div class="step-item">
+      <div class="step-num">1</div>
+      <div class="step-body"><strong>الفطار:</strong> جبن قريش + بيض + رز. ابدأ يومك ببروتين عالي يقلل الجوع طول اليوم.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">2</div>
+      <div class="step-body"><strong>الغداء:</strong> صدر دجاج مشوي + رز + خضار. أهم وجبة — ماتتأخرش فيها.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">3</div>
+      <div class="step-body"><strong>السناك:</strong> جبن قريش أو فاكهة. ماتعديش 4 ساعات من غير أكل.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">4</div>
+      <div class="step-body"><strong>العشاء:</strong> فول + بيض. كارب أقل من الغداء. ابعد عن السكريات بالليل.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">5</div>
+      <div class="step-body"><strong>التمرين:</strong> 4 أيام جيم (Push / Pull / Legs / Full) + 3 أيام مشي سريع 30-45 دقيقة.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">6</div>
+      <div class="step-body"><strong>الميه:</strong> 3-4 لتر يومياً. حطهم في جدول على التليفون لو نسيت.</div>
+    </div>
+    <div class="step-item">
+      <div class="step-num">7</div>
+      <div class="step-body"><strong>النوم:</strong> نام 8 ساعات. النوم = عضل + حرق دهون. مش رفاهية.</div>
+    </div>
+  </div>
+
+  <div class="goal-box">
+    <div class="gt">الهدف الواقعي</div>
+    <div class="gv">72.8 كجم</div>
+    <div class="gd">خسارة 2-3 كجم شهرياً = وصول للهدف في ~6 أشهر بشكل صحي ومستدام<br>الدهون الحشوية هترجع طبيعية في الشهر الثالث تقريباً</div>
+  </div>
+</section>
+
+<div style="text-align:center;padding:2rem;font-size:12px;color:var(--muted);border-top:1px solid var(--border);">
+  بُني على نتائج InBody270 — 2025.08.19 · ليس بديلاً عن استشارة طبية متخصصة
+</div>
+
+</body>
+</html>

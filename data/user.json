@@ -1,0 +1,27 @@
+{
+  "brand": "BodyShift",
+  "footerNote": "المحتوى ده للتوعية والدعم بس، ومش بديل عن دكتورك.",
+  "navLinks": [
+    { "label": "النتايج", "href": "#results" },
+    { "label": "الأكل", "href": "#diet" },
+    { "label": "التمرين", "href": "#gym" },
+    { "label": "الداشبورد", "href": "/dashboard" }
+  ],
+  "hero": {
+    "badge": "خطة تحول شخصية - 21 سنة",
+    "title": "جاهز تقلب جسمك خطوة خطوة؟",
+    "subtitle": "دي خطتك المتظبطة على قياساتك، وتقدر تتابع تقدمك كل شهر من غير لخبطة.",
+    "stats": [
+      { "label": "دهون جسمك", "value": 29.2, "unit": "%", "tone": "bad" },
+      { "label": "وزنك دلوقتي", "value": 87.3, "unit": "كجم", "tone": "warn" },
+      { "label": "هدفك اللي جاي", "value": 72.8, "unit": "كجم", "tone": "good" },
+      { "label": "سكور InBody", "value": 69, "unit": "/100", "tone": "good" }
+    ]
+  },
+  "profile": {
+    "firstName": "علي",
+    "age": 21,
+    "goalWeight": 72.8,
+    "targetMonthlyLossKg": 2.3
+  }
+}
