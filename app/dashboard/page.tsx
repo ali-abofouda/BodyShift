@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import Navbar from "@/components/Navbar";
-import DashboardStats from "@/components/DashboardStats";
-import EditableCard from "@/components/EditableCard";
-import GoalTracker from "@/components/GoalTracker";
-import MonthlyTracker from "@/components/MonthlyTracker";
-import ProgressChart from "@/components/ProgressChart";
-import DailyEntriesTable from "@/components/DailyEntriesTable";
-import DailyInputPanel from "@/components/DailyInputPanel";
-import { DashboardState, defaultDashboardState } from "@/data/fitnessData";
-import {
-  DailyEntry,
-  LOGIN_STORAGE_KEY,
-  THEME_STORAGE_KEY,
-  readDailyEntries,
-  readDashboardState,
-  writeDailyEntries,
-  writeDashboardState,
-} from "@/lib/localStore";
-import { calculateDailyAdherence, calculateOverview } from "@/lib/progressLogic";
+import { DailyLogInput, DailyLogRecord, dailyLogSchema } from "@/lib/dailyLogsSchema";
+import { buildChartData, filterLogsByRange, getMonthlyStats, getWeeklyStats } from "@/lib/dashboardStats";
+import { createDailyLog, deleteDailyLog, getCurrentUser, getDailyLogs, signOut, updateDailyLog } from "@/lib/dailyLogsService";
 
 function NumberInput({
   id,
@@ -50,419 +38,319 @@ function NumberInput({
 }
 
 export default function DashboardPage() {
-  const [state, setState] = useState<DashboardState>(() => readDashboardState() ?? defaultDashboardState);
-  const [dailyEntries, setDailyEntries] = useState<DailyEntry[]>(() => readDailyEntries());
-  const [formError, setFormError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const router = useRouter();
+  const [logs, setLogs] = useState<DailyLogRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [dailyForm, setDailyForm] = useState({
+  const [formError, setFormError] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [form, setForm] = useState<DailyLogInput>({
     date: new Date().toISOString().slice(0, 10),
-    weight: "",
-    calories: "",
-    protein: "",
-    carbs: "",
-    fat: "",
-    workoutDone: false,
-    note: "",
+    calories: 0,
+    weight: 0,
+    notes: "",
   });
-  const [displayName, setDisplayName] = useState(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-    return window.localStorage.getItem(LOGIN_STORAGE_KEY) ?? "";
-  });
-  const [nameInput, setNameInput] = useState(() => {
-    if (typeof window === "undefined") {
-      return "";
-    }
-    return window.localStorage.getItem(LOGIN_STORAGE_KEY) ?? "";
-  });
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
-    if (typeof window === "undefined") {
-      return "dark";
-    }
-    const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
-  });
+  const [userEmail, setUserEmail] = useState("");
 
-  useEffect(() => {
-    writeDashboardState(state);
-  }, [state]);
+  const filteredLogs = useMemo(() => filterLogsByRange(logs, startDate, endDate), [endDate, logs, startDate]);
+  const chartData = useMemo(() => buildChartData(filteredLogs), [filteredLogs]);
+  const weekly = useMemo(() => getWeeklyStats(logs), [logs]);
+  const monthly = useMemo(() => getMonthlyStats(logs), [logs]);
 
-  useEffect(() => {
-    writeDailyEntries(dailyEntries);
-  }, [dailyEntries]);
-
-  useEffect(() => {
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
-
-  useEffect(() => {
-    if (!successMessage) {
-      return;
-    }
-    const timeout = window.setTimeout(() => setSuccessMessage(""), 2500);
-    return () => window.clearTimeout(timeout);
-  }, [successMessage]);
-
-  const overview = useMemo(() => calculateOverview(state), [state]);
-  const sortedEntries = useMemo(
-    () => [...dailyEntries].sort((a, b) => b.date.localeCompare(a.date)),
-    [dailyEntries],
-  );
-  const recentEntries = useMemo(() => sortedEntries.slice(0, 7), [sortedEntries]);
-  const derivedAdherence = useMemo(
-    () => calculateDailyAdherence(recentEntries, state.dailyCalories),
-    [recentEntries, state.dailyCalories],
-  );
-  const workoutCompletion = useMemo(
-    () => recentEntries.filter((entry) => entry.workoutDone).length,
-    [recentEntries],
-  );
-  const latestWeight = useMemo(() => {
-    if (sortedEntries.length === 0) {
-      return null;
-    }
-    return sortedEntries[0].weight;
-  }, [sortedEntries]);
-
-  const workoutProgress = useMemo(() => {
-    const target = Math.max(state.workoutCompletion.target, recentEntries.length || state.workoutCompletion.target);
-    if (target <= 0) {
-      return 0;
-    }
-    return Math.round((workoutCompletion / target) * 100);
-  }, [recentEntries.length, state.workoutCompletion.target, workoutCompletion]);
-
-  const updateField = <K extends keyof DashboardState>(key: K, value: DashboardState[K]) => {
-    setState((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const updateMacro = (key: keyof DashboardState["macros"], value: number) => {
-    setState((prev) => ({
-      ...prev,
-      macros: {
-        ...prev.macros,
-        [key]: value,
-      },
-    }));
-  };
-
-  const addCurrentMonth = () => {
-    const now = new Date();
-    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const label = now.toLocaleDateString("ar-EG", { month: "long", year: "numeric" });
-
-    setState((prev) => {
-      const withoutCurrent = prev.monthly.filter((item) => item.month !== month);
-      return {
-        ...prev,
-        monthly: [
-          ...withoutCurrent,
-          {
-            month,
-            label,
-            weight: prev.currentWeight,
-            bodyFat: prev.currentBodyFat,
-            muscleMass: prev.muscleMass,
-            visceralFat: prev.visceralFat,
-          },
-        ],
-      };
-    });
-  };
-
-  const clearMonthly = () => {
-    setState((prev) => ({ ...prev, monthly: [] }));
-  };
-
-  const clearDailyForm = () => {
-    setDailyForm({
-      date: new Date().toISOString().slice(0, 10),
-      weight: "",
-      calories: "",
-      protein: "",
-      carbs: "",
-      fat: "",
-      workoutDone: false,
-      note: "",
-    });
-    setEditingId(null);
-  };
-
-  const submitDailyEntry = () => {
-    setFormError("");
-    setSuccessMessage("");
-
-    if (!dailyForm.date) {
-      setFormError("لازم تختار تاريخ اليوم.");
-      return;
-    }
-
-    const payload = {
-      weight: Number(dailyForm.weight),
-      calories: Number(dailyForm.calories),
-      protein: Number(dailyForm.protein),
-      carbs: Number(dailyForm.carbs),
-      fat: Number(dailyForm.fat),
-    };
-
-    if (Object.values(payload).some((value) => Number.isNaN(value) || value <= 0)) {
-      setFormError("كل القيم الرقمية لازم تكون أكبر من صفر.");
-      return;
-    }
-
-    const nextEntry: DailyEntry = {
-      id: editingId ?? crypto.randomUUID(),
-      date: dailyForm.date,
-      weight: Number(payload.weight.toFixed(1)),
-      calories: Math.round(payload.calories),
-      protein: Math.round(payload.protein),
-      carbs: Math.round(payload.carbs),
-      fat: Math.round(payload.fat),
-      workoutDone: dailyForm.workoutDone,
-      note: dailyForm.note.trim(),
-    };
-
-    setDailyEntries((prev) => {
-      if (!editingId) {
-        return [...prev, nextEntry];
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        router.push("/auth");
+        return;
       }
-      return prev.map((item) => (item.id === editingId ? nextEntry : item));
-    });
 
-    if (!editingId) {
-      setState((prev) => ({ ...prev, currentWeight: nextEntry.weight }));
+      setUserEmail(user.email ?? "User");
+      const data = await getDailyLogs();
+      setLogs(data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load dashboard data.";
+      toast.error(message);
+    } finally {
+      setLoading(false);
     }
-    clearDailyForm();
-    setSuccessMessage(editingId ? "تم تحديث اليوم بنجاح." : "تم حفظ اليوم بنجاح.");
-  };
+  }, [router]);
 
-  const startEditEntry = (entry: DailyEntry) => {
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => window.clearTimeout(timeout);
+  }, [loadData]);
+
+  function clearForm() {
+    setEditingId(null);
     setFormError("");
-    setSuccessMessage("");
-    setEditingId(entry.id);
-    setDailyForm({
-      date: entry.date,
-      weight: String(entry.weight),
-      calories: String(entry.calories),
-      protein: String(entry.protein),
-      carbs: String(entry.carbs),
-      fat: String(entry.fat),
-      workoutDone: entry.workoutDone,
-      note: entry.note,
+    setForm({
+      date: new Date().toISOString().slice(0, 10),
+      calories: 0,
+      weight: 0,
+      notes: "",
     });
-  };
-
-  const deleteEntry = (id: string) => {
-    setDailyEntries((prev) => prev.filter((entry) => entry.id !== id));
-    if (editingId === id) {
-      clearDailyForm();
-    }
-    setSuccessMessage("تم حذف اليوم من السجل.");
-  };
-
-  const submitLogin = () => {
-    const cleaned = nameInput.trim();
-    if (!cleaned) {
-      return;
-    }
-    setDisplayName(cleaned);
-    window.localStorage.setItem(LOGIN_STORAGE_KEY, cleaned);
-  };
-
-  if (!displayName) {
-    return (
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <Navbar />
-        <main className="px-4 py-20 sm:px-6">
-          <section className="mx-auto w-full max-w-md rounded-2xl border border-emerald-500/20 bg-zinc-900/80 p-6">
-            <h1 className="mb-2 text-2xl font-black">أهلا بيك 👋</h1>
-            <p className="mb-4 text-sm text-zinc-400">اكتب اسمك عشان نفتحلك الداشبورد الشخصية.</p>
-            <input
-              value={nameInput}
-              onChange={(event) => setNameInput(event.target.value)}
-              placeholder="اكتب اسمك"
-              className="mb-3 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-emerald-400"
-            />
-            <button
-              type="button"
-              onClick={submitLogin}
-              className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-black text-zinc-950 transition hover:bg-emerald-400"
-            >
-              دخول
-            </button>
-          </section>
-        </main>
-      </div>
-    );
   }
 
-  const rootTone =
-    theme === "dark"
-      ? "bg-zinc-950 text-zinc-100"
-      : "bg-zinc-100 text-zinc-900 [&_article]:bg-white [&_section]:bg-white";
+  async function onSave() {
+    setFormError("");
+    const parsed = dailyLogSchema.safeParse(form);
+    if (!parsed.success) {
+      setFormError(parsed.error.issues[0]?.message ?? "Invalid input.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (editingId) {
+        const updated = await updateDailyLog(editingId, parsed.data);
+        setLogs((prev) => prev.map((log) => (log.id === editingId ? updated : log)));
+        toast.success("Log updated.");
+      } else {
+        const created = await createDailyLog(parsed.data);
+        setLogs((prev) => [created, ...prev]);
+        toast.success("Daily log added.");
+      }
+      clearForm();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Save failed.";
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function onEdit(log: DailyLogRecord) {
+    setEditingId(log.id);
+    setFormError("");
+    setForm({
+      date: log.date,
+      calories: log.calories,
+      weight: log.weight,
+      notes: log.notes ?? "",
+    });
+  }
+
+  async function onDelete(id: string) {
+    try {
+      await deleteDailyLog(id);
+      setLogs((prev) => prev.filter((log) => log.id !== id));
+      toast.success("Log deleted.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Delete failed.";
+      toast.error(message);
+    }
+  }
+
+  async function onLogout() {
+    try {
+      await signOut();
+      toast.success("Logged out.");
+      router.push("/auth");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Logout failed.";
+      toast.error(message);
+    }
+  }
 
   return (
-    <div className={rootTone}>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <Navbar />
       <main className="min-h-screen px-4 pt-24 pb-14 sm:px-6">
         <section className="mx-auto mb-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-black">داشبورد تقدمك يا {displayName}</h1>
-            <p className="text-sm text-zinc-400">كل الأرقام دي قابلة للتعديل وبتتحفظ تلقائي</p>
+            <h1 className="text-3xl font-black">Daily Tracking Dashboard</h1>
+            <p className="text-sm text-zinc-400">{userEmail || "Loading user..."}</p>
           </div>
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+              onClick={loadData}
               className="rounded-lg border border-zinc-600 px-3 py-1.5 text-xs font-bold transition hover:border-emerald-500"
             >
-              {theme === "dark" ? "الوضع الفاتح" : "الوضع الغامق"}
+              Refresh
             </button>
             <button
               type="button"
-              onClick={() => window.print()}
+              onClick={onLogout}
               className="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-bold text-zinc-950 transition hover:bg-emerald-400"
             >
-              تصدير PDF
+              Logout
             </button>
           </div>
         </section>
 
-        <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-3">
-          <div className="space-y-4 lg:col-span-2">
-            <DashboardStats
-              currentWeight={latestWeight ?? state.currentWeight}
-              currentBodyFat={state.currentBodyFat}
-              goalWeight={state.goalWeight}
-              weightDiff={overview.weightDiff}
-              fatDiff={overview.fatDiff}
-            />
-
-            <DailyInputPanel
-              form={dailyForm}
-              formError={formError}
-              successMessage={successMessage}
-              editing={Boolean(editingId)}
-              onChange={setDailyForm}
-              onSubmit={submitDailyEntry}
-              onCancelEdit={clearDailyForm}
-            />
-
-            <DailyEntriesTable entries={sortedEntries} onEdit={startEditEntry} onDelete={deleteEntry} />
-
-            <ProgressChart data={state.monthly} />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <EditableCard title="تعديل القياسات" subtitle="غير القيم والواجهة هتتحدث فورًا">
-                <div className="grid gap-3 sm:grid-cols-2">
+        {loading ? (
+          <section className="mx-auto w-full max-w-6xl rounded-2xl border border-zinc-700 bg-zinc-900/70 p-8 text-center text-zinc-400">
+            Loading dashboard...
+          </section>
+        ) : (
+          <div className="mx-auto grid w-full max-w-6xl gap-4 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
+                <h3 className="mb-3 text-base font-extrabold">Daily Input</h3>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label className="space-y-1 text-xs text-zinc-300">
+                    <span>Date</span>
+                    <input
+                      type="date"
+                      value={form.date}
+                      onChange={(event) => setForm((prev) => ({ ...prev, date: event.target.value }))}
+                      className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                    />
+                  </label>
                   <NumberInput
-                    id="current-weight"
-                    label="وزنك دلوقتي (كجم)"
-                    value={state.currentWeight}
-                    onChange={(value) => updateField("currentWeight", value)}
+                    id="calories"
+                    label="Calories"
+                    value={Number(form.calories)}
+                    onChange={(value) => setForm((prev) => ({ ...prev, calories: value }))}
+                    step={1}
                   />
                   <NumberInput
-                    id="goal-weight"
-                    label="هدفك اللي جاي (كجم)"
-                    value={state.goalWeight}
-                    onChange={(value) => updateField("goalWeight", value)}
+                    id="weight"
+                    label="Weight (kg)"
+                    value={Number(form.weight)}
+                    onChange={(value) => setForm((prev) => ({ ...prev, weight: value }))}
+                    step={0.1}
                   />
-                  <NumberInput
-                    id="body-fat"
-                    label="دهون جسمك (%)"
-                    value={state.currentBodyFat}
-                    onChange={(value) => updateField("currentBodyFat", value)}
-                  />
-                  <NumberInput
-                    id="muscle-mass"
-                    label="الكتلة العضلية (كجم)"
-                    value={state.muscleMass}
-                    onChange={(value) => updateField("muscleMass", value)}
-                  />
+                  <label className="space-y-1 text-xs text-zinc-300 sm:col-span-3">
+                    <span>Notes</span>
+                    <input
+                      type="text"
+                      value={form.notes}
+                      onChange={(event) => setForm((prev) => ({ ...prev, notes: event.target.value }))}
+                      className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                    />
+                  </label>
                 </div>
-              </EditableCard>
-
-              <EditableCard title="الأكل والسعرات" subtitle="عدل السعرات والماكروز على مزاج خطتك">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <NumberInput
-                    id="daily-calories"
-                    label="سعراتك اليومية"
-                    value={state.dailyCalories}
-                    onChange={(value) => updateField("dailyCalories", value)}
-                    step={1}
-                  />
-                  <NumberInput
-                    id="macro-protein"
-                    label="بروتين (جم)"
-                    value={state.macros.protein}
-                    onChange={(value) => updateMacro("protein", value)}
-                    step={1}
-                  />
-                  <NumberInput
-                    id="macro-carbs"
-                    label="كارب (جم)"
-                    value={state.macros.carbs}
-                    onChange={(value) => updateMacro("carbs", value)}
-                    step={1}
-                  />
-                  <NumberInput
-                    id="macro-fat"
-                    label="دهون (جم)"
-                    value={state.macros.fat}
-                    onChange={(value) => updateMacro("fat", value)}
-                    step={1}
-                  />
+                {formError ? <p className="mt-3 text-xs font-semibold text-rose-300">{formError}</p> : null}
+                <div className="mt-4 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={onSave}
+                    disabled={saving}
+                    className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-black text-zinc-950 transition hover:bg-emerald-400 disabled:opacity-60"
+                  >
+                    {saving ? "Saving..." : editingId ? "Update Log" : "Save Log"}
+                  </button>
+                  {editingId ? (
+                    <button
+                      type="button"
+                      onClick={clearForm}
+                      className="rounded-lg border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-200 transition hover:border-zinc-400"
+                    >
+                      Cancel
+                    </button>
+                  ) : null}
                 </div>
-              </EditableCard>
+              </section>
+
+              <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
+                <div className="mb-4 flex flex-wrap gap-3">
+                  <label className="space-y-1 text-xs text-zinc-300">
+                    <span>Start date</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(event) => setStartDate(event.target.value)}
+                      className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-zinc-300">
+                    <span>End date</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(event) => setEndDate(event.target.value)}
+                      className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm"
+                    />
+                  </label>
+                </div>
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <XAxis dataKey="date" stroke="#a1a1aa" />
+                      <YAxis stroke="#a1a1aa" />
+                      <Tooltip />
+                      <Line type="monotone" dataKey="weight" stroke="#34d399" strokeWidth={2} />
+                      <Line type="monotone" dataKey="calories" stroke="#f59e0b" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+            </div>
+
+            <div className="space-y-4">
+              <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
+                <h3 className="mb-3 text-base font-extrabold">Weekly Stats</h3>
+                <p className="text-sm text-zinc-300">Days logged: {weekly.days}</p>
+                <p className="text-sm text-zinc-300">Avg weight: {weekly.avgWeight} kg</p>
+                <p className="text-sm text-zinc-300">Calories total: {weekly.totalCalories}</p>
+              </section>
+              <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
+                <h3 className="mb-3 text-base font-extrabold">Monthly Stats</h3>
+                <p className="text-sm text-zinc-300">Days logged: {monthly.days}</p>
+                <p className="text-sm text-zinc-300">Avg weight: {monthly.avgWeight} kg</p>
+                <p className="text-sm text-zinc-300">Calories total: {monthly.totalCalories}</p>
+              </section>
+              <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
+                <h3 className="mb-3 text-base font-extrabold">Logs Table</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[540px] text-sm">
+                    <thead>
+                      <tr className="border-b border-zinc-800 text-zinc-400">
+                        <th className="px-2 py-2 text-start">Date</th>
+                        <th className="px-2 py-2 text-start">Weight</th>
+                        <th className="px-2 py-2 text-start">Calories</th>
+                        <th className="px-2 py-2 text-start">Notes</th>
+                        <th className="px-2 py-2 text-start">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredLogs.map((log) => (
+                        <tr key={log.id} className="border-b border-zinc-900/70 text-zinc-200">
+                          <td className="px-2 py-2">{log.date}</td>
+                          <td className="px-2 py-2">{log.weight} kg</td>
+                          <td className="px-2 py-2">{log.calories}</td>
+                          <td className="px-2 py-2">{log.notes || "-"}</td>
+                          <td className="px-2 py-2">
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => onEdit(log)}
+                                className="rounded-md border border-emerald-500/40 px-2 py-1 text-xs font-bold text-emerald-300 hover:bg-emerald-500/10"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onDelete(log.id)}
+                                className="rounded-md border border-rose-500/40 px-2 py-1 text-xs font-bold text-rose-300 hover:bg-rose-500/10"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredLogs.length === 0 ? <p className="mt-3 text-xs text-zinc-400">No logs found in this filter.</p> : null}
+              </section>
+              <section className="rounded-2xl border border-zinc-700 bg-zinc-900/70 p-5 text-xs text-zinc-400">
+                Data is cached in memory for the session to reduce repeated requests. Use Refresh for manual sync.
+              </section>
             </div>
           </div>
-
-          <div className="space-y-4">
-            <GoalTracker
-              currentWeight={latestWeight ?? state.currentWeight}
-              goalWeight={state.goalWeight}
-              remainingToGoal={overview.remainingToGoal}
-              estimatedMonths={overview.estimatedMonths}
-            />
-
-            <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5">
-              <h3 className="mb-3 text-base font-extrabold">نسبة التزامك (آخر 7 أيام)</h3>
-
-              <div className="mb-3 space-y-2">
-                <p className="flex justify-between text-xs text-zinc-400">
-                  <span>التمرين</span>
-                  <span>
-                    {workoutCompletion}/{Math.max(recentEntries.length, state.workoutCompletion.target)}
-                  </span>
-                </p>
-                <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
-                  <div className="h-full bg-emerald-400 transition-all" style={{ width: `${workoutProgress}%` }} />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="flex justify-between text-xs text-zinc-400">
-                  <span>الأكل</span>
-                  <span>{derivedAdherence}%</span>
-                </p>
-                <div className="h-2.5 overflow-hidden rounded-full bg-zinc-800">
-                  <div className="h-full bg-amber-400 transition-all" style={{ width: `${derivedAdherence}%` }} />
-                </div>
-              </div>
-            </section>
-
-            <MonthlyTracker monthly={state.monthly} onAddMonth={addCurrentMonth} onClear={clearMonthly} />
-
-            <section className="rounded-2xl border border-emerald-500/20 bg-zinc-900/75 p-5 text-sm">
-              <h3 className="mb-2 text-base font-extrabold">حسابات سريعة</h3>
-              <p className="text-zinc-300">فرق الوزن عن الشهر اللي فات: {overview.weightDiff} كجم</p>
-              <p className="text-zinc-300">تغيير الدهون: {overview.fatDiff}%</p>
-              <p className="text-zinc-300">نسبة نزول الدهون: {overview.fatLossPercent}%</p>
-            </section>
-          </div>
-        </div>
+        )}
       </main>
     </div>
   );

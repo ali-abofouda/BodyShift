@@ -1,138 +1,87 @@
-# BodyShift Dashboard
+# BodyShift - Supabase Daily Tracking System
 
-Dynamic fitness tracking web app built with Next.js App Router, TypeScript, Tailwind CSS, Framer Motion, and Recharts.
+Production-ready fitness tracking system built with Next.js + Supabase.
 
-## What Changed
+## Features
 
-- Migrated all fitness/business data to JSON files.
-- Added `/dashboard` for editable tracking and monthly analytics.
-- Added localStorage persistence layer (ready to swap with API later).
-- Added progress logic for monthly comparison and goal forecasting.
+- Secure auth: register, login, logout.
+- Protected dashboard route.
+- Online daily logs (no localStorage dependency).
+- CRUD on daily logs (add, edit, delete).
+- Filtering by date range.
+- Weekly/monthly statistics.
+- Recharts trends for weight/calories.
+- Toast notifications for UX feedback.
+- Zod validation + error handling.
+- Unit + E2E test setup.
 
-## Tech Stack
+## Stack
 
 - Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS v4
-- Framer Motion
+- Supabase (`@supabase/supabase-js`, `@supabase/ssr`)
 - Recharts
+- Sonner (toasts)
+- Vitest + Playwright
 
-## Project Structure
+## Supabase Setup
 
-```text
-app/
-	dashboard/
-		page.tsx
-	globals.css
-	layout.tsx
-	page.tsx
-components/
-	DashboardStats.tsx
-	EditableCard.tsx
-	GoalTracker.tsx
-	MonthlyTracker.tsx
-	ProgressChart.tsx
-	Navbar.tsx
-	Hero.tsx
-	Results.tsx
-	Diet.tsx
-	Meals.tsx
-	Gym.tsx
-	Cardio.tsx
-	Tips.tsx
-	Summary.tsx
-	ui/
-		AnimatedReveal.tsx
-		Badge.tsx
-		Pill.tsx
-		SectionHeader.tsx
-data/
-	user.json
-	progress.json
-	diet.json
-	workout.json
-	fitnessData.ts
-lib/
-	localStore.ts
-	progressLogic.ts
-main.html
+1. Open Supabase SQL Editor.
+2. Run `supabase/schema.sql`.
+3. Confirm table + RLS policies are created:
+   - `daily_logs`
+   - unique `(user_id, date)`
+   - policies for select/insert/update/delete on own rows only
+
+## Environment Variables
+
+1. Copy `.env.example` to `.env.local`.
+2. Add real values:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 ```
 
-## Data Layer
-
-Update your app data from:
-
-- `data/user.json`
-- `data/progress.json`
-- `data/diet.json`
-- `data/workout.json`
-
-All UI values are read through `data/fitnessData.ts`, so editing these JSON files changes the UI source of truth.
-
-## Dashboard Editing Flow
-
-On `/dashboard`:
-
-- Edit weight, calories, and macros directly from inputs.
-- Changes are saved to localStorage automatically.
-- UI updates instantly after each edit.
-
-Local keys:
-
-- `bodyshift.dashboard.v1`
-- `bodyshift.login.v1`
-- `bodyshift.theme.v1`
-
-## Progress Calculations
-
-`lib/progressLogic.ts` calculates:
-
-- Weight difference vs last month
-- Body fat difference vs last month
-- Remaining weight to goal
-- Estimated months to goal
-- Fat loss percentage trend
-
-## Run Locally
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open `http://localhost:3000` and `http://localhost:3000/dashboard`.
+Open:
 
-## Build Verification
+- `http://localhost:3000`
+- `http://localhost:3000/auth`
+- `http://localhost:3000/dashboard`
+
+## Test & Verify
 
 ```bash
 npm run lint
+npm run test
 npm run build
+npm run test:e2e
 ```
 
-## Push To GitHub
+## Key Files
 
-```bash
-git add .
-git commit -m "feat: add dynamic dashboard with JSON data layer and progress tracking"
-git branch -M main
-git remote add origin https://github.com/<your-username>/bodyshift-webapp.git
-git push -u origin main
-```
+- `supabase/schema.sql`: DB schema + constraints + RLS policies
+- `lib/supabase/client.ts`: browser Supabase client
+- `lib/supabase/server.ts`: server Supabase client
+- `lib/supabase/middleware.ts`: auth-aware route protection helper
+- `proxy.ts`: route protection for `/dashboard` and `/auth`
+- `lib/dailyLogsService.ts`: CRUD + auth service layer
+- `lib/dailyLogsSchema.ts`: Zod validation schema
+- `lib/dashboardStats.ts`: filtering + weekly/monthly stats + chart transform
+- `app/auth/page.tsx`: login/register page
+- `app/dashboard/page.tsx`: dashboard UI + CRUD + charts + filtering
 
-## Deploy To Vercel
+## Production Notes
 
-### Vercel Dashboard
-
-1. Push repository to GitHub.
-2. Open Vercel and click New Project.
-3. Import the repository.
-4. Framework preset: Next.js.
-5. Deploy.
-
-### Vercel CLI
-
-```bash
-npm i -g vercel
-vercel
-vercel --prod
-```
+- Never expose service-role keys in frontend env vars.
+- Keep `anon key` in `NEXT_PUBLIC_*` only.
+- Use Supabase RLS as the source of data isolation.
+- For stronger production UX: add email verification template + password reset page.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Cairo, Tajawal } from "next/font/google";
 import "./globals.css";
+import ToasterProvider from "@/components/ToasterProvider";
 
 const tajawal = Tajawal({
   variable: "--font-tajawal",
@@ -30,7 +31,10 @@ export default function RootLayout({
       dir="rtl"
       className={`${tajawal.variable} ${cairo.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <ToasterProvider />
+      </body>
     </html>
   );
 }
